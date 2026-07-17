@@ -1,0 +1,1701 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="description" content="4WD 載具扭矩、摩擦環境與馬達功率換算工具" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>4WD 載具扭矩與功率計算器</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #121c2e;
+      --panel-2: #18243a;
+      --line: #2a3954;
+      --text: #edf3ff;
+      --muted: #a7b4c8;
+      --accent: #57a6ff;
+      --good: #48d597;
+      --warn: #ffcc66;
+      --danger: #ff7d7d;
+      --shadow: 0 18px 45px rgba(0,0,0,.22);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 15% -10%, rgba(87,166,255,.20), transparent 34%),
+        radial-gradient(circle at 100% 10%, rgba(72,213,151,.10), transparent 30%),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    .container {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 34px 0 64px;
+    }
+
+    header {
+      margin-bottom: 24px;
+      padding: 26px 28px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, rgba(24,36,58,.96), rgba(18,28,46,.92));
+      box-shadow: var(--shadow);
+    }
+
+    h1, h2, h3 { margin: 0; }
+    h1 { font-size: clamp(26px, 4vw, 42px); letter-spacing: -.03em; }
+    h2 { font-size: 22px; }
+    h3 { font-size: 16px; color: var(--muted); font-weight: 650; }
+    p { margin: 8px 0 0; color: var(--muted); }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(87,166,255,.13);
+      color: #beddff;
+      border: 1px solid rgba(87,166,255,.28);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(320px, .85fr);
+      gap: 22px;
+      align-items: start;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(18,28,46,.96);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card-head {
+      padding: 20px 22px 16px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.012);
+    }
+
+    .card-body { padding: 22px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .field { display: grid; gap: 7px; }
+    .field.full { grid-column: 1 / -1; }
+
+    label {
+      color: #dce7f8;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .input-wrap {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: stretch;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #0d1728;
+      overflow: hidden;
+      transition: .2s ease;
+    }
+
+    .input-wrap:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(87,166,255,.14);
+    }
+
+    input, select {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+      padding: 12px 13px;
+    }
+
+    select {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #0d1728;
+      color: var(--text);
+    }
+
+    option { background: #132038; color: var(--text); }
+
+    .unit {
+      display: grid;
+      place-items: center;
+      min-width: 66px;
+      padding: 0 11px;
+      color: var(--muted);
+      border-left: 1px solid var(--line);
+      background: rgba(255,255,255,.018);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .help {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    details {
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: rgba(255,255,255,.015);
+    }
+
+    summary {
+      cursor: pointer;
+      padding: 14px 15px;
+      color: #dfe9f8;
+      font-weight: 750;
+      user-select: none;
+    }
+
+    details .inside {
+      padding: 0 15px 15px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .15s ease, opacity .15s ease, border-color .15s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .primary {
+      flex: 1;
+      color: #06101e;
+      background: linear-gradient(135deg, #70b8ff, #57a6ff);
+    }
+
+    .secondary {
+      color: var(--text);
+      background: transparent;
+      border: 1px solid var(--line);
+    }
+
+    .results {
+      display: grid;
+      gap: 12px;
+    }
+
+    .result {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(255,255,255,.025), rgba(255,255,255,.008));
+    }
+
+    .result strong {
+      display: block;
+      margin-top: 5px;
+      font-size: 24px;
+      letter-spacing: -.02em;
+    }
+
+    .result small { color: var(--muted); }
+
+    .result.accent {
+      border-color: rgba(87,166,255,.42);
+      background: linear-gradient(135deg, rgba(87,166,255,.13), rgba(87,166,255,.025));
+    }
+
+    .dual {
+      display: flex;
+      gap: 10px;
+      align-items: baseline;
+      flex-wrap: wrap;
+    }
+
+    .dual .alt {
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .status {
+      margin-top: 14px;
+      padding: 13px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.018);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .status.good { color: #b9f5d9; border-color: rgba(72,213,151,.36); background: rgba(72,213,151,.08); }
+    .status.warn { color: #ffe2a3; border-color: rgba(255,204,102,.38); background: rgba(255,204,102,.08); }
+    .status.danger { color: #ffc0c0; border-color: rgba(255,125,125,.38); background: rgba(255,125,125,.08); }
+
+    .section-gap { margin-top: 22px; }
+
+    .ref-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .ref-table th, .ref-table td {
+      padding: 11px 10px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    .ref-table th { color: #dce7f8; }
+    .ref-table td { color: var(--muted); }
+    .ref-table tr:last-child td { border-bottom: 0; }
+
+    .apply {
+      padding: 7px 9px;
+      font-size: 12px;
+      color: #cfe6ff;
+      border: 1px solid rgba(87,166,255,.28);
+      background: rgba(87,166,255,.10);
+    }
+
+    .formula-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding-left: 20px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    code {
+      color: #d7ebff;
+      background: rgba(87,166,255,.09);
+      padding: 2px 5px;
+      border-radius: 5px;
+    }
+
+    .quick-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .quick-nav a {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 10px 13px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: #dceaff;
+      background: rgba(255,255,255,.022);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 750;
+      transition: .18s ease;
+    }
+
+    .quick-nav a:hover {
+      border-color: var(--accent);
+      background: rgba(87,166,255,.10);
+      transform: translateY(-1px);
+    }
+
+    .quick-nav a span {
+      display: grid;
+      place-items: center;
+      min-width: 25px;
+      height: 25px;
+      padding: 0 6px;
+      border-radius: 8px;
+      color: #beddff;
+      background: rgba(87,166,255,.14);
+      font-size: 11px;
+    }
+
+    #function1, #function2 {
+      scroll-margin-top: 18px;
+    }
+
+    .power-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(310px, .75fr);
+      gap: 22px;
+      margin-top: 22px;
+    }
+
+    .mode-switch {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 20px;
+      padding: 7px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #0d1728;
+    }
+
+    .mode-switch button {
+      display: grid;
+      gap: 2px;
+      padding: 11px 9px;
+      color: var(--muted);
+      border: 1px solid transparent;
+      background: transparent;
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    .mode-switch button span {
+      font-size: 11px;
+      font-weight: 650;
+      opacity: .78;
+    }
+
+    .mode-switch button.active {
+      color: #06101e;
+      border-color: rgba(112,184,255,.85);
+      background: linear-gradient(135deg, #70b8ff, #57a6ff);
+      box-shadow: 0 8px 22px rgba(87,166,255,.18);
+    }
+
+    .calc-field {
+      position: relative;
+      padding: 13px;
+      border: 1px solid transparent;
+      border-radius: 14px;
+      transition: .18s ease;
+    }
+
+    .calc-field.is-output {
+      border-color: rgba(87,166,255,.38);
+      background: rgba(87,166,255,.07);
+    }
+
+    .calc-field.is-output label::after {
+      content: "自動計算";
+      margin-left: 8px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      color: #beddff;
+      background: rgba(87,166,255,.16);
+      font-size: 10px;
+      vertical-align: middle;
+    }
+
+    .calc-field.is-output input {
+      color: #8fc7ff;
+      font-weight: 800;
+    }
+
+    .calc-field.is-output .input-wrap {
+      border-color: rgba(87,166,255,.30);
+      background: rgba(8,19,34,.88);
+    }
+
+    .result-line {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .result-line strong {
+      margin-top: 0;
+    }
+
+    .result-subgrid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .result-subgrid span {
+      padding: 8px 9px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: rgba(255,255,255,.015);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .vehicle-mode-switch {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .support-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 88px;
+      padding: 6px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .support-full {
+      color: #b9f5d9;
+      border-color: rgba(72,213,151,.40);
+      background: rgba(72,213,151,.10);
+    }
+
+    .support-typical {
+      color: #cfe6ff;
+      border-color: rgba(87,166,255,.40);
+      background: rgba(87,166,255,.10);
+    }
+
+    .support-low {
+      color: #ffe2a3;
+      border-color: rgba(255,204,102,.42);
+      background: rgba(255,204,102,.10);
+    }
+
+    .support-no {
+      color: #ffc0c0;
+      border-color: rgba(255,125,125,.42);
+      background: rgba(255,125,125,.10);
+    }
+
+    .support-ref {
+      color: var(--muted);
+      background: rgba(255,255,255,.025);
+    }
+
+    .support-detail {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 10px;
+      white-space: nowrap;
+    }
+
+    .coefficient-equation {
+      margin-top: 10px;
+      padding: 11px 12px;
+      border: 1px dashed rgba(87,166,255,.34);
+      border-radius: 10px;
+      color: #cfe6ff;
+      background: rgba(87,166,255,.06);
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+
+    .inline-inputs {
+      display: grid;
+      grid-template-columns: 1fr 160px;
+      gap: 12px;
+    }
+
+    .footer-note {
+      margin-top: 22px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    @media (max-width: 900px) {
+      .layout, .power-layout { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 620px) {
+      .container { width: min(100% - 20px, 1180px); padding-top: 18px; }
+      header, .card-body, .card-head { padding-left: 16px; padding-right: 16px; }
+      .grid { grid-template-columns: 1fr; }
+      .field.full { grid-column: auto; }
+      .inline-inputs { grid-template-columns: 1fr; }
+      .mode-switch { grid-template-columns: 1fr; }
+      .vehicle-mode-switch { grid-template-columns: 1fr; }
+      .mode-switch button { grid-template-columns: 1fr auto; align-items: center; text-align: left; }
+      .result-subgrid { grid-template-columns: 1fr; }
+      .actions { flex-direction: column; }
+      .ref-table { font-size: 12px; }
+      .ref-table th:nth-child(4), .ref-table td:nth-child(4) { display: none; }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <header>
+      <div class="badge">4WD SKID-STEER / 四輪獨立驅動</div>
+      <h1>載具扭矩與功率計算器</h1>
+      <p>估算平地直線滾動、原地自轉所需扭矩，以及扭矩、轉速與機械功率的相互換算。</p>
+
+      <nav class="quick-nav" aria-label="頁面快速索引">
+        <a href="#function1"><span>01</span>4 驅扭矩評估／環境反推</a>
+        <a href="#function2"><span>02</span>扭矩／功率／轉速換算</a>
+      </nav>
+    </header>
+
+    <section class="layout" id="function1">
+      <div class="card">
+        <div class="card-head">
+          <h2>功能 1｜4 驅扭矩評估與環境反推</h2>
+          <p>假設四輪平均承重、重心位於車體中央，並以左右輪反向旋轉完成原地自轉。</p>
+        </div>
+
+        <div class="card-body">
+          <div class="mode-switch vehicle-mode-switch" role="group" aria-label="選擇載具計算模式">
+            <button type="button" class="vehicle-mode-button active" data-vehicle-mode="estimate">
+              車體條件 ＋ 摩擦係數
+              <span>估算所需扭矩</span>
+            </button>
+            <button type="button" class="vehicle-mode-button" data-vehicle-mode="reverse">
+              單顆馬達扭矩
+              <span>反推可支援環境</span>
+            </button>
+          </div>
+
+          <div class="grid">
+            <div class="field">
+              <label for="wheelDiameter">輪子直徑</label>
+              <div class="input-wrap">
+                <input id="wheelDiameter" type="number" min="1" step="1" value="300" />
+                <span class="unit">mm</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="mass">整車重量</label>
+              <div class="input-wrap">
+                <input id="mass" type="number" min="0.1" step="0.1" value="200" />
+                <span class="unit">kg</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="wheelbase">前後輪中心距（軸距）</label>
+              <div class="input-wrap">
+                <input id="wheelbase" type="number" min="1" step="1" value="700" />
+                <span class="unit">mm</span>
+              </div>
+              <span class="help">前輪軸中心到後輪軸中心。</span>
+            </div>
+
+            <div class="field">
+              <label for="trackWidth">左右輪中心距（輪距）</label>
+              <div class="input-wrap">
+                <input id="trackWidth" type="number" min="1" step="1" value="600" />
+                <span class="unit">mm</span>
+              </div>
+              <span class="help">左輪接地中心到右輪接地中心。</span>
+            </div>
+
+            <div class="field vehicle-friction-field">
+              <label for="crr" id="crrLabel">滾動摩擦係數 Crr</label>
+              <div class="input-wrap">
+                <input id="crr" type="number" min="0" max="1" step="0.001" value="0.030" />
+                <span class="unit">—</span>
+              </div>
+              <span class="help" id="crrHelp">用於估算直線滾動與自轉中的滾動阻力。</span>
+            </div>
+
+            <div class="field vehicle-friction-field">
+              <label for="mu" id="muLabel">靜摩擦係數 μs</label>
+              <div class="input-wrap">
+                <input id="mu" type="number" min="0" max="2" step="0.01" value="0.70" />
+                <span class="unit">—</span>
+              </div>
+              <span class="help" id="muHelp">用於保守估算原地自轉起步的側向擦地阻力。</span>
+            </div>
+
+            <div class="field full calc-field hidden" id="availableTorqueField">
+              <label for="availableMotorTorque">單顆馬達可用扭矩</label>
+              <div class="inline-inputs">
+                <div class="input-wrap">
+                  <input id="availableMotorTorque" type="number" min="0" step="0.001" value="20" />
+                  <span class="unit" id="availableTorqueUnitLabel">N·m</span>
+                </div>
+                <select id="availableTorqueUnit" aria-label="單顆馬達扭矩單位">
+                  <option value="nm">N·m</option>
+                  <option value="kgfm">kgf·m</option>
+                </select>
+              </div>
+              <span class="help">輸入馬達軸端可持續或峰值扭矩；結果會依減速比、傳動效率與安全係數反推。</span>
+            </div>
+          </div>
+
+          <details>
+            <summary>進階設定</summary>
+            <div class="inside">
+              <div class="grid">
+                <div class="field">
+                  <label for="gearRatio">減速比</label>
+                  <div class="input-wrap">
+                    <input id="gearRatio" type="number" min="0.01" step="0.01" value="1" />
+                    <span class="unit">: 1</span>
+                  </div>
+                  <span class="help">例如 20 代表馬達轉 20 圈、輪子轉 1 圈。</span>
+                </div>
+
+                <div class="field">
+                  <label for="efficiency">傳動效率</label>
+                  <div class="input-wrap">
+                    <input id="efficiency" type="number" min="1" max="100" step="1" value="90" />
+                    <span class="unit">%</span>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label for="safetyFactor">安全係數</label>
+                  <div class="input-wrap">
+                    <input id="safetyFactor" type="number" min="1" step="0.05" value="1.50" />
+                    <span class="unit">×</span>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label for="gravity">重力加速度</label>
+                  <div class="input-wrap">
+                    <input id="gravity" type="number" min="1" step="0.0001" value="9.80665" />
+                    <span class="unit">m/s²</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <div class="actions">
+            <button class="primary" id="calculateVehicle">計算扭矩需求</button>
+            <button class="secondary" id="resetVehicle">恢復預設值</button>
+          </div>
+        </div>
+      </div>
+
+      <aside class="card">
+        <div class="card-head">
+          <h2 id="vehicleResultTitle">計算結果｜扭矩需求</h2>
+          <p id="vehicleResultDescription">結果已包含設定的安全係數與傳動效率。</p>
+        </div>
+
+        <div class="card-body">
+          <div class="results" id="vehicleEstimateResults">
+            <div class="result">
+              <h3>單顆輪端直線滾動扭矩</h3>
+              <div class="dual">
+                <strong id="straightWheelNm">—</strong>
+                <span class="alt" id="straightWheelKgf">—</span>
+              </div>
+            </div>
+
+            <div class="result accent">
+              <h3>單顆馬達原地自轉扭矩</h3>
+              <div class="dual">
+                <strong id="pivotMotorNm">—</strong>
+                <span class="alt" id="pivotMotorKgf">—</span>
+              </div>
+              <small>馬達軸端；已依減速比與傳動效率換算。</small>
+            </div>
+
+            <div class="result">
+              <h3>單顆輪端原地自轉扭矩</h3>
+              <div class="dual">
+                <strong id="pivotWheelNm">—</strong>
+                <span class="alt" id="pivotWheelKgf">—</span>
+              </div>
+            </div>
+
+            <div class="result">
+              <h3>整車自轉偏航扭矩</h3>
+              <div class="dual">
+                <strong id="yawNm">—</strong>
+                <span class="alt" id="yawKgf">—</span>
+              </div>
+              <small>作用於車體中心的旋轉力矩，不等同四顆馬達扭矩直接相加。</small>
+            </div>
+
+            <div class="result">
+              <h3>四輪輪端扭矩合計</h3>
+              <div class="dual">
+                <strong id="sumWheelNm">—</strong>
+                <span class="alt" id="sumWheelKgf">—</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="results hidden" id="vehicleReverseResults">
+            <div class="result accent">
+              <h3>單顆可用輪端扭矩</h3>
+              <div class="dual">
+                <strong id="availableWheelNm">—</strong>
+                <span class="alt" id="availableWheelKgf">—</span>
+              </div>
+              <small>馬達扭矩 × 減速比 × 傳動效率。</small>
+            </div>
+
+            <div class="result">
+              <h3>最大滾動摩擦係數 Crr</h3>
+              <strong id="maxSupportedCrr">—</strong>
+              <small>假設 μs = 0；亦可視為平地直線滾動的理論 Crr 上限。</small>
+            </div>
+
+            <div class="result">
+              <h3>最大靜摩擦係數 μs</h3>
+              <strong id="maxSupportedMu">—</strong>
+              <small>假設 Crr = 0，用於原地自轉擦地模型。</small>
+            </div>
+
+            <div class="result">
+              <h3>Crr 與 μs 組合邊界</h3>
+              <strong id="coefficientBudget">—</strong>
+              <div class="coefficient-equation" id="coefficientEquation">—</div>
+              <small>只要組合位於邊界以下，理論扭矩即足夠。</small>
+            </div>
+
+            <div class="result">
+              <h3>目前輸入環境組合</h3>
+              <div class="dual">
+                <strong id="customRequiredMotorNm">—</strong>
+                <span class="alt" id="customRequiredMotorKgf">—</span>
+              </div>
+              <small id="customPairMargin">—</small>
+            </div>
+          </div>
+
+          <div class="status" id="tractionStatus">
+            請輸入參數後計算。
+          </div>
+
+          <details>
+            <summary>計算模型與限制</summary>
+            <div class="inside">
+              <ul class="formula-list">
+                <li>單輪法向力：<code>N = mg / 4</code></li>
+                <li>直線輪端扭矩：<code>T = Crr × N × r</code></li>
+                <li>自轉擦地偏航阻力：<code>Mz = μs × mg × L / 2</code></li>
+                <li>滾動偏航阻力：<code>Mz,rr = Crr × mg × W / 2</code></li>
+                <li>單輪自轉扭矩：<code>T = Mz,total × r / (2W)</code></li>
+                <li>馬達軸扭矩：<code>Tmotor = Twheel / (減速比 × 效率)</code></li>
+                <li>反推組合邊界：<code>μs × L + Crr × W ≤ K</code></li>
+                <li><code>K = 4W × Twheel / (mg × 安全係數 × r)</code></li>
+              </ul>
+              <p class="help">
+                這是平地準靜態估算。未包含加速、坡度、輪胎變形、地面鬆陷、轉向瞬間衝擊及載重偏心。
+                在滑移轉向模型中，較高的 μs 代表較大的側向擦地阻力，不代表馬達一定能更容易原地自轉。
+              </p>
+            </div>
+          </details>
+        </div>
+      </aside>
+    </section>
+
+    <section class="card section-gap">
+      <div class="card-head">
+        <h2>常用摩擦係數與環境支援判定</h2>
+        <p id="environmentTableDescription">數值為工程初估範圍；在反推模式下會依單顆馬達扭矩判定可支援程度。</p>
+      </div>
+
+      <div class="card-body">
+        <div style="overflow-x:auto">
+          <table class="ref-table" id="environmentTable">
+            <thead>
+              <tr>
+                <th>輪胎／地面</th>
+                <th>Crr 建議值</th>
+                <th>μs 建議值</th>
+                <th>適用說明</th>
+                <th>扭矩支援判定</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr data-name="硬質 PU 輪／平滑混凝土" data-crr-min="0.010" data-crr-max="0.020" data-mu-min="0.40" data-mu-max="0.65">
+                <td>硬質 PU 輪／平滑混凝土</td>
+                <td>0.010–0.020</td>
+                <td>0.40–0.65</td>
+                <td>室內 AGV、地面平整</td>
+                <td class="support-cell"><span class="support-badge support-ref">參考</span></td>
+                <td><button class="apply" data-crr="0.015" data-mu="0.525">套用中值</button></td>
+              </tr>
+              <tr data-name="充氣橡膠胎／乾燥混凝土" data-crr-min="0.015" data-crr-max="0.030" data-mu-min="0.70" data-mu-max="1.00">
+                <td>充氣橡膠胎／乾燥混凝土</td>
+                <td>0.015–0.030</td>
+                <td>0.70–1.00</td>
+                <td>抓地力高，自轉擦地阻力也高</td>
+                <td class="support-cell"><span class="support-badge support-ref">參考</span></td>
+                <td><button class="apply" data-crr="0.0225" data-mu="0.85">套用中值</button></td>
+              </tr>
+              <tr data-name="實心橡膠胎／混凝土" data-crr-min="0.020" data-crr-max="0.050" data-mu-min="0.60" data-mu-max="0.90">
+                <td>實心橡膠胎／混凝土</td>
+                <td>0.020–0.050</td>
+                <td>0.60–0.90</td>
+                <td>工業車常見，胎體變形較小</td>
+                <td class="support-cell"><span class="support-badge support-ref">參考</span></td>
+                <td><button class="apply" data-crr="0.035" data-mu="0.75">套用中值</button></td>
+              </tr>
+              <tr data-name="橡膠胎／乾燥柏油" data-crr-min="0.020" data-crr-max="0.040" data-mu-min="0.70" data-mu-max="0.95">
+                <td>橡膠胎／乾燥柏油</td>
+                <td>0.020–0.040</td>
+                <td>0.70–0.95</td>
+                <td>戶外硬地，表面粗糙</td>
+                <td class="support-cell"><span class="support-badge support-ref">參考</span></td>
+                <td><button class="apply" data-crr="0.030" data-mu="0.825">套用中值</button></td>
+              </tr>
+              <tr data-name="橡膠胎／潮濕混凝土" data-crr-min="0.020" data-crr-max="0.040" data-mu-min="0.40" data-mu-max="0.70">
+                <td>橡膠胎／潮濕混凝土</td>
+                <td>0.020–0.040</td>
+                <td>0.40–0.70</td>
+                <td>水膜可能使抓地力下降</td>
+                <td class="support-cell"><span class="support-badge support-ref">參考</span></td>
+                <td><button class="apply" data-crr="0.030" data-mu="0.55">套用中值</button></td>
+              </tr>
+              <tr data-name="橡膠胎／壓實土或碎石" data-crr-min="0.040" data-crr-max="0.080" data-mu-min="0.50" data-mu-max="0.80">
+                <td>橡膠胎／壓實土或碎石</td>
+                <td>0.040–0.080</td>
+                <td>0.50–0.80</td>
+                <td>農地道路、碎石場</td>
+                <td class="support-cell"><span class="support-badge support-ref">參考</span></td>
+                <td><button class="apply" data-crr="0.060" data-mu="0.65">套用中值</button></td>
+              </tr>
+              <tr data-name="橡膠胎／草地或鬆土" data-crr-min="0.080" data-crr-max="0.200" data-mu-min="0.35" data-mu-max="0.65">
+                <td>橡膠胎／草地或鬆土</td>
+                <td>0.080–0.200</td>
+                <td>0.35–0.65</td>
+                <td>地面鬆陷時 Crr 可能更高</td>
+                <td class="support-cell"><span class="support-badge support-ref">參考</span></td>
+                <td><button class="apply" data-crr="0.140" data-mu="0.50">套用中值</button></td>
+              </tr>
+              <tr data-name="橡膠胎／濕泥" data-crr-min="0.120" data-crr-max="0.300" data-mu-min="0.20" data-mu-max="0.45">
+                <td>橡膠胎／濕泥</td>
+                <td>0.120–0.300</td>
+                <td>0.20–0.45</td>
+                <td>數值波動大，容易打滑與下陷</td>
+                <td class="support-cell"><span class="support-badge support-ref">參考</span></td>
+                <td><button class="apply" data-crr="0.210" data-mu="0.325">套用中值</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="help" style="margin-top:12px">
+          「完整支援」表示範圍上限組合也可支援；「典型值支援」表示中值可支援；「僅低阻力端」表示只有範圍下限附近可支援。
+          此判定以原地自轉扭矩模型為準，不代表鬆土下陷、爬坡或加速能力一定足夠。
+        </p>
+      </div>
+    </section>
+
+    <section class="power-layout" id="function2">
+      <div class="card">
+        <div class="card-head">
+          <h2>功能 2｜扭矩、功率與轉速換算</h2>
+          <p>快速選擇已知的兩個參數，自動計算第三個參數。</p>
+        </div>
+
+        <div class="card-body">
+          <div class="mode-switch" role="group" aria-label="選擇要求解的參數">
+            <button type="button" class="mode-button active" data-mode="power">
+              扭矩 ＋ 轉速
+              <span>計算功率</span>
+            </button>
+            <button type="button" class="mode-button" data-mode="torque">
+              功率 ＋ 轉速
+              <span>計算扭矩</span>
+            </button>
+            <button type="button" class="mode-button" data-mode="rpm">
+              功率 ＋ 扭矩
+              <span>計算轉速</span>
+            </button>
+          </div>
+
+          <div class="grid">
+            <div class="field full calc-field" id="torqueField">
+              <label for="calcTorque">扭矩</label>
+              <div class="inline-inputs">
+                <div class="input-wrap">
+                  <input id="calcTorque" type="number" min="0" step="0.001" value="20" />
+                  <span class="unit" id="calcTorqueUnitLabel">N·m</span>
+                </div>
+                <select id="calcTorqueUnit" aria-label="扭矩單位">
+                  <option value="nm">N·m</option>
+                  <option value="kgfm">kgf·m</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field full calc-field is-output" id="powerField">
+              <label for="calcPower">機械功率</label>
+              <div class="inline-inputs">
+                <div class="input-wrap">
+                  <input id="calcPower" type="number" min="0" step="0.001" value="209.44" readonly />
+                  <span class="unit" id="calcPowerUnitLabel">W</span>
+                </div>
+                <select id="calcPowerUnit" aria-label="功率單位">
+                  <option value="w">W</option>
+                  <option value="kw">kW</option>
+                  <option value="ps">PS</option>
+                  <option value="hp">hp</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field full calc-field" id="rpmField">
+              <label for="calcRpm">轉速</label>
+              <div class="input-wrap">
+                <input id="calcRpm" type="number" min="0" step="0.01" value="100" />
+                <span class="unit">RPM</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="primary" id="calculateMotor">計算功率</button>
+            <button class="secondary" id="resetMotor">恢復預設值</button>
+          </div>
+
+          <div class="status good" id="motorCalcStatus">
+            目前模式：輸入扭矩與轉速，計算機械功率。
+          </div>
+
+          <details>
+            <summary>換算公式</summary>
+            <div class="inside">
+              <ul class="formula-list">
+                <li><code>P(W) = T(N·m) × 2π × RPM / 60</code></li>
+                <li><code>T(N·m) = P(W) × 60 / (2π × RPM)</code></li>
+                <li><code>RPM = P(W) × 60 / (2π × T(N·m))</code></li>
+                <li><code>1 kgf·m = 9.80665 N·m</code></li>
+                <li><code>1 PS = 735.49875 W</code></li>
+                <li><code>1 hp = 745.69987 W</code></li>
+              </ul>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <aside class="card">
+        <div class="card-head">
+          <h2 id="primaryResultTitle">計算結果｜功率</h2>
+          <p>所有等效單位會同步更新。</p>
+        </div>
+        <div class="card-body">
+          <div class="results">
+            <div class="result accent">
+              <h3 id="primaryResultLabel">機械功率</h3>
+              <strong id="primaryResultValue">—</strong>
+              <small id="primaryResultAlt">—</small>
+            </div>
+
+            <div class="result">
+              <div class="result-line">
+                <h3>扭矩</h3>
+                <strong id="resultTorqueNm">—</strong>
+              </div>
+              <div class="result-subgrid">
+                <span id="resultTorqueKgf">—</span>
+              </div>
+            </div>
+
+            <div class="result">
+              <div class="result-line">
+                <h3>機械功率</h3>
+                <strong id="resultPowerW">—</strong>
+              </div>
+              <div class="result-subgrid">
+                <span id="resultPowerKw">—</span>
+                <span id="resultPowerPs">—</span>
+                <span id="resultPowerHp">—</span>
+              </div>
+            </div>
+
+            <div class="result">
+              <div class="result-line">
+                <h3>轉速</h3>
+                <strong id="resultRpm">—</strong>
+              </div>
+              <div class="result-subgrid">
+                <span id="resultRadSec">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <div class="footer-note">
+      本工具適合概念設計與規格初估；正式選型仍應加入坡度、加速度、峰值衝擊、熱負載與實車測試。
+    </div>
+  </main>
+
+  <script>
+    const KGFM_TO_NM = 9.80665;
+
+    const $ = (id) => document.getElementById(id);
+    const n = (id) => Number($(id).value);
+
+    function finitePositive(...values) {
+      return values.every(v => Number.isFinite(v) && v > 0);
+    }
+
+    function format(value, digits = 2) {
+      if (!Number.isFinite(value)) return "—";
+      return value.toLocaleString("zh-TW", {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits
+      });
+    }
+
+    function torqueTextNm(value) {
+      return `${format(value, 2)} N·m`;
+    }
+
+    function torqueTextKgf(valueNm) {
+      return `${format(valueNm / KGFM_TO_NM, 3)} kgf·m`;
+    }
+
+    let vehicleCalcMode = "estimate";
+
+    function getVehicleInputs() {
+      return {
+        d: n("wheelDiameter") / 1000,
+        m: n("mass"),
+        L: n("wheelbase") / 1000,
+        W: n("trackWidth") / 1000,
+        crr: n("crr"),
+        mu: n("mu"),
+        ratio: n("gearRatio"),
+        eta: n("efficiency") / 100,
+        sf: n("safetyFactor"),
+        g: n("gravity")
+      };
+    }
+
+    function validateVehicleInputs(input) {
+      return finitePositive(
+        input.d, input.m, input.L, input.W,
+        input.ratio, input.eta, input.sf, input.g
+      ) && input.crr >= 0 && input.mu >= 0 && input.eta <= 1;
+    }
+
+    function requiredMotorTorque(input, crr, mu) {
+      const r = input.d / 2;
+      const wheelTorque =
+        input.m * input.g * input.sf * r
+        * (mu * input.L + crr * input.W)
+        / (4 * input.W);
+
+      return wheelTorque / (input.ratio * input.eta);
+    }
+
+    function setVehicleStatus(message, type = "") {
+      const status = $("tractionStatus");
+      status.className = type ? `status ${type}` : "status";
+      status.textContent = message;
+    }
+
+    function resetEnvironmentSupportTable() {
+      document.querySelectorAll("#environmentTable tbody tr").forEach(row => {
+        const cell = row.querySelector(".support-cell");
+        cell.innerHTML = '<span class="support-badge support-ref">參考</span>';
+      });
+    }
+
+    function updateEnvironmentSupportTable(input, availableMotorTorqueNm) {
+      document.querySelectorAll("#environmentTable tbody tr").forEach(row => {
+        const crrMin = Number(row.dataset.crrMin);
+        const crrMax = Number(row.dataset.crrMax);
+        const muMin = Number(row.dataset.muMin);
+        const muMax = Number(row.dataset.muMax);
+        const crrMid = (crrMin + crrMax) / 2;
+        const muMid = (muMin + muMax) / 2;
+
+        const torqueMin = requiredMotorTorque(input, crrMin, muMin);
+        const torqueMid = requiredMotorTorque(input, crrMid, muMid);
+        const torqueMax = requiredMotorTorque(input, crrMax, muMax);
+
+        let label;
+        let cssClass;
+
+        if (availableMotorTorqueNm >= torqueMax) {
+          label = "完整支援";
+          cssClass = "support-full";
+        } else if (availableMotorTorqueNm >= torqueMid) {
+          label = "典型值支援";
+          cssClass = "support-typical";
+        } else if (availableMotorTorqueNm >= torqueMin) {
+          label = "僅低阻力端";
+          cssClass = "support-low";
+        } else {
+          label = "不建議";
+          cssClass = "support-no";
+        }
+
+        const cell = row.querySelector(".support-cell");
+        cell.innerHTML =
+          `<span class="support-badge ${cssClass}">${label}</span>`
+          + `<span class="support-detail">需求 ${format(torqueMin, 2)}–${format(torqueMax, 2)} N·m</span>`;
+      });
+    }
+
+    function calculateVehicleEstimate(input) {
+      const r = input.d / 2;
+      const normalPerWheel = input.m * input.g / 4;
+
+      const straightWheelTorque =
+        input.crr * normalPerWheel * r * input.sf;
+
+      const scrubYaw =
+        input.mu * input.m * input.g * input.L / 2;
+      const rollingYaw =
+        input.crr * input.m * input.g * input.W / 2;
+      const yawTorque =
+        (scrubYaw + rollingYaw) * input.sf;
+
+      const pivotWheelTorque =
+        yawTorque * r / (2 * input.W);
+      const pivotMotorTorque =
+        pivotWheelTorque / (input.ratio * input.eta);
+      const sumWheelTorque =
+        pivotWheelTorque * 4;
+
+      $("straightWheelNm").textContent = torqueTextNm(straightWheelTorque);
+      $("straightWheelKgf").textContent = torqueTextKgf(straightWheelTorque);
+
+      $("pivotMotorNm").textContent = torqueTextNm(pivotMotorTorque);
+      $("pivotMotorKgf").textContent = torqueTextKgf(pivotMotorTorque);
+
+      $("pivotWheelNm").textContent = torqueTextNm(pivotWheelTorque);
+      $("pivotWheelKgf").textContent = torqueTextKgf(pivotWheelTorque);
+
+      $("yawNm").textContent = torqueTextNm(yawTorque);
+      $("yawKgf").textContent = torqueTextKgf(yawTorque);
+
+      $("sumWheelNm").textContent = torqueTextNm(sumWheelTorque);
+      $("sumWheelKgf").textContent = torqueTextKgf(sumWheelTorque);
+
+      resetEnvironmentSupportTable();
+
+      const tractionLimitWheelTorque =
+        input.mu * normalPerWheel * r;
+      const requiredWithoutSf =
+        pivotWheelTorque / input.sf;
+      const ratioToLimit =
+        tractionLimitWheelTorque > 0
+          ? requiredWithoutSf / tractionLimitWheelTorque
+          : Infinity;
+
+      if (input.mu === 0) {
+        setVehicleStatus(
+          "μs = 0 時無法評估靜摩擦牽引極限；自轉結果只剩滾動阻力項。",
+          "warn"
+        );
+      } else if (ratioToLimit <= 0.75) {
+        setVehicleStatus(
+          `幾何牽引檢查：單輪需求約為靜摩擦牽引上限的 ${format(ratioToLimit * 100, 1)}%。仍須確認馬達峰值、驅動器限流與輪胎滑移。`,
+          "good"
+        );
+      } else if (ratioToLimit <= 1.0) {
+        setVehicleStatus(
+          `幾何牽引檢查：單輪需求約為靜摩擦牽引上限的 ${format(ratioToLimit * 100, 1)}%，裕度偏低。實車可能出現打滑、轉不動或電流突升。`,
+          "warn"
+        );
+      } else {
+        setVehicleStatus(
+          `幾何牽引檢查：理論需求約為靜摩擦牽引上限的 ${format(ratioToLimit * 100, 1)}%。實際原地轉向必須依靠輪胎側向滑動。`,
+          "danger"
+        );
+      }
+    }
+
+    function calculateVehicleReverse(input) {
+      const torqueUnit = $("availableTorqueUnit").value;
+      const motorTorqueInput = n("availableMotorTorque");
+      const availableMotorTorqueNm =
+        torqueUnit === "kgfm"
+          ? motorTorqueInput * KGFM_TO_NM
+          : motorTorqueInput;
+
+      if (!Number.isFinite(availableMotorTorqueNm) || availableMotorTorqueNm < 0) {
+        setVehicleStatus("請輸入有效且不小於 0 的單顆馬達扭矩。", "danger");
+        return;
+      }
+
+      const r = input.d / 2;
+      const availableWheelTorque =
+        availableMotorTorqueNm * input.ratio * input.eta;
+
+      // Boundary: mu*L + Crr*W <= K.
+      const K =
+        4 * input.W * availableWheelTorque
+        / (input.m * input.g * input.sf * r);
+
+      const maxCrr =
+        K / input.W;
+      const maxMu =
+        K / input.L;
+
+      const customRequired =
+        requiredMotorTorque(input, input.crr, input.mu);
+      const customMargin =
+        customRequired > 0
+          ? availableMotorTorqueNm / customRequired
+          : Infinity;
+
+      $("availableWheelNm").textContent = torqueTextNm(availableWheelTorque);
+      $("availableWheelKgf").textContent = torqueTextKgf(availableWheelTorque);
+      $("maxSupportedCrr").textContent = format(maxCrr, 4);
+      $("maxSupportedMu").textContent = format(maxMu, 4);
+      $("coefficientBudget").textContent = `K = ${format(K, 4)} m`;
+      $("coefficientEquation").textContent =
+        `${format(input.L, 3)} × μs + ${format(input.W, 3)} × Crr ≤ ${format(K, 4)}`;
+
+      $("customRequiredMotorNm").textContent = torqueTextNm(customRequired);
+      $("customRequiredMotorKgf").textContent = torqueTextKgf(customRequired);
+
+      if (customRequired === 0) {
+        $("customPairMargin").textContent = "目前係數組合不產生模型中的阻力需求。";
+      } else {
+        $("customPairMargin").textContent =
+          `目前組合需要單顆馬達 ${format(customRequired, 3)} N·m；可用／需求 = ${format(customMargin, 2)}×。`;
+      }
+
+      updateEnvironmentSupportTable(input, availableMotorTorqueNm);
+
+      if (availableMotorTorqueNm === 0) {
+        setVehicleStatus(
+          "單顆馬達扭矩為 0，無法支援任何非零滾動或擦地阻力。",
+          "danger"
+        );
+      } else if (customMargin >= 1.50) {
+        setVehicleStatus(
+          `目前 Crr=${format(input.crr, 3)}、μs=${format(input.mu, 3)} 的環境組合可支援，扭矩裕度約 ${format(customMargin, 2)}×。`,
+          "good"
+        );
+      } else if (customMargin >= 1.0) {
+        setVehicleStatus(
+          `目前環境組合理論上可支援，但裕度僅 ${format(customMargin, 2)}×；實車加速、坡度或地面下陷可能使需求超標。`,
+          "warn"
+        );
+      } else {
+        setVehicleStatus(
+          `目前環境組合需要 ${format(customRequired, 2)} N·m／顆，高於可用的 ${format(availableMotorTorqueNm, 2)} N·m／顆。`,
+          "danger"
+        );
+      }
+    }
+
+    function calculateVehicle() {
+      const input = getVehicleInputs();
+
+      if (!validateVehicleInputs(input)) {
+        setVehicleStatus(
+          "請確認車體尺寸、重量、減速比、安全係數皆為有效正數；摩擦係數不可為負值，傳動效率需介於 1–100%。",
+          "danger"
+        );
+        return;
+      }
+
+      if (vehicleCalcMode === "reverse") {
+        calculateVehicleReverse(input);
+      } else {
+        calculateVehicleEstimate(input);
+      }
+    }
+
+    function setVehicleMode(mode) {
+      vehicleCalcMode = mode;
+
+      document.querySelectorAll(".vehicle-mode-button").forEach(button => {
+        button.classList.toggle(
+          "active",
+          button.dataset.vehicleMode === mode
+        );
+      });
+
+      const reverseMode = mode === "reverse";
+      $("availableTorqueField").classList.toggle("hidden", !reverseMode);
+      $("vehicleEstimateResults").classList.toggle("hidden", reverseMode);
+      $("vehicleReverseResults").classList.toggle("hidden", !reverseMode);
+
+      $("calculateVehicle").textContent =
+        reverseMode ? "反推支援環境" : "計算扭矩需求";
+
+      $("vehicleResultTitle").textContent =
+        reverseMode
+          ? "計算結果｜可支援環境"
+          : "計算結果｜扭矩需求";
+
+      $("vehicleResultDescription").textContent =
+        reverseMode
+          ? "依單顆馬達軸端扭矩，反推 Crr 與 μs 的可支援組合。"
+          : "結果已包含設定的安全係數與傳動效率。";
+
+      $("crrLabel").textContent =
+        reverseMode
+          ? "自訂檢查值：滾動摩擦係數 Crr"
+          : "滾動摩擦係數 Crr";
+
+      $("muLabel").textContent =
+        reverseMode
+          ? "自訂檢查值：靜摩擦係數 μs"
+          : "靜摩擦係數 μs";
+
+      $("crrHelp").textContent =
+        reverseMode
+          ? "用來檢查某個指定環境組合是否落在可支援邊界內。"
+          : "用於估算直線滾動與自轉中的滾動阻力。";
+
+      $("muHelp").textContent =
+        reverseMode
+          ? "在滑移轉向模型中，此值越大，原地自轉擦地需求越高。"
+          : "用於保守估算原地自轉起步的側向擦地阻力。";
+
+      $("environmentTableDescription").textContent =
+        reverseMode
+          ? "下表已依單顆馬達扭矩、車體幾何、減速比與安全係數判定支援程度。"
+          : "數值為工程初估範圍；切換至反推模式後可依單顆馬達扭矩判定支援程度。";
+
+      calculateVehicle();
+    }
+
+    const W_PER_PS = 735.49875;
+    const W_PER_HP = 745.69987;
+    let motorCalcMode = "power";
+
+    function torqueToNm(value, unit) {
+      return unit === "kgfm" ? value * KGFM_TO_NM : value;
+    }
+
+    function torqueFromNm(valueNm, unit) {
+      return unit === "kgfm" ? valueNm / KGFM_TO_NM : valueNm;
+    }
+
+    function powerToWatts(value, unit) {
+      switch (unit) {
+        case "kw": return value * 1000;
+        case "ps": return value * W_PER_PS;
+        case "hp": return value * W_PER_HP;
+        default: return value;
+      }
+    }
+
+    function powerFromWatts(watts, unit) {
+      switch (unit) {
+        case "kw": return watts / 1000;
+        case "ps": return watts / W_PER_PS;
+        case "hp": return watts / W_PER_HP;
+        default: return watts;
+      }
+    }
+
+    function inputNumber(value, digits = 5) {
+      if (!Number.isFinite(value)) return "";
+      return Number(value.toFixed(digits)).toString();
+    }
+
+    function setMotorStatus(message, type = "good") {
+      const status = $("motorCalcStatus");
+      status.className = `status ${type}`;
+      status.textContent = message;
+    }
+
+    function setMotorMode(mode) {
+      motorCalcMode = mode;
+
+      document.querySelectorAll(".mode-button").forEach(button => {
+        button.classList.toggle("active", button.dataset.mode === mode);
+      });
+
+      const fieldMap = {
+        torque: $("torqueField"),
+        power: $("powerField"),
+        rpm: $("rpmField")
+      };
+
+      Object.entries(fieldMap).forEach(([key, field]) => {
+        field.classList.toggle("is-output", key === mode);
+      });
+
+      $("calcTorque").readOnly = mode === "torque";
+      $("calcPower").readOnly = mode === "power";
+      $("calcRpm").readOnly = mode === "rpm";
+
+      const labels = {
+        power: {
+          button: "計算功率",
+          title: "計算結果｜功率",
+          result: "機械功率",
+          status: "目前模式：輸入扭矩與轉速，計算機械功率。"
+        },
+        torque: {
+          button: "計算扭矩",
+          title: "計算結果｜扭矩",
+          result: "軸扭矩",
+          status: "目前模式：輸入機械功率與轉速，計算軸扭矩。"
+        },
+        rpm: {
+          button: "計算轉速",
+          title: "計算結果｜轉速",
+          result: "軸轉速",
+          status: "目前模式：輸入機械功率與扭矩，計算軸轉速。"
+        }
+      };
+
+      const config = labels[mode];
+      $("calculateMotor").textContent = config.button;
+      $("primaryResultTitle").textContent = config.title;
+      $("primaryResultLabel").textContent = config.result;
+      setMotorStatus(config.status);
+      calculateMotor();
+    }
+
+    function updateMotorResults(torqueNm, watts, rpm) {
+      const radSec = rpm * 2 * Math.PI / 60;
+
+      $("resultTorqueNm").textContent = `${format(torqueNm, 4)} N·m`;
+      $("resultTorqueKgf").textContent = `${format(torqueNm / KGFM_TO_NM, 5)} kgf·m`;
+
+      $("resultPowerW").textContent = `${format(watts, 3)} W`;
+      $("resultPowerKw").textContent = `${format(watts / 1000, 6)} kW`;
+      $("resultPowerPs").textContent = `${format(watts / W_PER_PS, 6)} PS`;
+      $("resultPowerHp").textContent = `${format(watts / W_PER_HP, 6)} hp`;
+
+      $("resultRpm").textContent = `${format(rpm, 3)} RPM`;
+      $("resultRadSec").textContent = `${format(radSec, 5)} rad/s`;
+
+      if (motorCalcMode === "power") {
+        $("primaryResultValue").textContent = `${format(watts, 3)} W`;
+        $("primaryResultAlt").textContent =
+          `${format(watts / 1000, 6)} kW ｜ ${format(watts / W_PER_PS, 6)} PS ｜ ${format(watts / W_PER_HP, 6)} hp`;
+      } else if (motorCalcMode === "torque") {
+        $("primaryResultValue").textContent = `${format(torqueNm, 4)} N·m`;
+        $("primaryResultAlt").textContent = `${format(torqueNm / KGFM_TO_NM, 5)} kgf·m`;
+      } else {
+        $("primaryResultValue").textContent = `${format(rpm, 3)} RPM`;
+        $("primaryResultAlt").textContent = `${format(radSec, 5)} rad/s`;
+      }
+    }
+
+    function calculateMotor() {
+      const torqueUnit = $("calcTorqueUnit").value;
+      const powerUnit = $("calcPowerUnit").value;
+
+      let torqueNm = torqueToNm(n("calcTorque"), torqueUnit);
+      let watts = powerToWatts(n("calcPower"), powerUnit);
+      let rpm = n("calcRpm");
+
+      if ([torqueNm, watts, rpm].some(value => !Number.isFinite(value) || value < 0)) {
+        setMotorStatus("請輸入有效且不小於 0 的數值。", "danger");
+        return;
+      }
+
+      if (motorCalcMode === "power") {
+        watts = torqueNm * 2 * Math.PI * rpm / 60;
+        $("calcPower").value = inputNumber(powerFromWatts(watts, powerUnit));
+      } else if (motorCalcMode === "torque") {
+        if (rpm === 0) {
+          if (watts === 0) {
+            torqueNm = 0;
+          } else {
+            setMotorStatus("轉速為 0 RPM 時，無法由非零功率反推有限扭矩。", "danger");
+            return;
+          }
+        } else {
+          torqueNm = watts * 60 / (2 * Math.PI * rpm);
+        }
+        $("calcTorque").value = inputNumber(torqueFromNm(torqueNm, torqueUnit));
+      } else {
+        if (torqueNm === 0) {
+          if (watts === 0) {
+            rpm = 0;
+          } else {
+            setMotorStatus("扭矩為 0 時，無法由非零功率反推有限轉速。", "danger");
+            return;
+          }
+        } else {
+          rpm = watts * 60 / (2 * Math.PI * torqueNm);
+        }
+        $("calcRpm").value = inputNumber(rpm);
+      }
+
+      updateMotorResults(torqueNm, watts, rpm);
+
+      const modeText = {
+        power: "已由扭矩與轉速完成機械功率換算。",
+        torque: "已由機械功率與轉速完成扭矩換算。",
+        rpm: "已由機械功率與扭矩完成轉速換算。"
+      };
+      setMotorStatus(modeText[motorCalcMode]);
+    }
+
+    $("calculateVehicle").addEventListener("click", calculateVehicle);
+    $("calculateMotor").addEventListener("click", calculateMotor);
+
+    document.querySelectorAll(".vehicle-mode-button").forEach(button => {
+      button.addEventListener("click", () => {
+        setVehicleMode(button.dataset.vehicleMode);
+      });
+    });
+
+    $("resetVehicle").addEventListener("click", () => {
+      $("wheelDiameter").value = 300;
+      $("mass").value = 200;
+      $("wheelbase").value = 700;
+      $("trackWidth").value = 600;
+      $("crr").value = 0.030;
+      $("mu").value = 0.70;
+      $("gearRatio").value = 1;
+      $("efficiency").value = 90;
+      $("safetyFactor").value = 1.50;
+      $("gravity").value = 9.80665;
+      $("availableMotorTorque").value = 20;
+      $("availableTorqueUnit").value = "nm";
+      $("availableTorqueUnit").dataset.previousUnit = "nm";
+      $("availableTorqueUnitLabel").textContent = "N·m";
+      setVehicleMode("estimate");
+    });
+
+    $("resetMotor").addEventListener("click", () => {
+      $("calcTorque").value = 20;
+      $("calcTorqueUnit").value = "nm";
+      $("calcTorqueUnit").dataset.previousUnit = "nm";
+      $("calcTorqueUnitLabel").textContent = "N·m";
+
+      $("calcPower").value = 0;
+      $("calcPowerUnit").value = "w";
+      $("calcPowerUnit").dataset.previousUnit = "w";
+      $("calcPowerUnitLabel").textContent = "W";
+
+      $("calcRpm").value = 100;
+      setMotorMode("power");
+    });
+
+    document.querySelectorAll(".mode-button").forEach(button => {
+      button.addEventListener("click", () => setMotorMode(button.dataset.mode));
+    });
+
+    $("calcTorqueUnit").dataset.previousUnit = $("calcTorqueUnit").value;
+    $("calcPowerUnit").dataset.previousUnit = $("calcPowerUnit").value;
+
+    $("calcTorqueUnit").addEventListener("change", (event) => {
+      const previousUnit = event.target.dataset.previousUnit || "nm";
+      const nextUnit = event.target.value;
+      const currentValue = Number($("calcTorque").value);
+
+      if (Number.isFinite(currentValue)) {
+        const torqueNm = torqueToNm(currentValue, previousUnit);
+        $("calcTorque").value = inputNumber(torqueFromNm(torqueNm, nextUnit));
+      }
+
+      event.target.dataset.previousUnit = nextUnit;
+      $("calcTorqueUnitLabel").textContent = nextUnit === "kgfm" ? "kgf·m" : "N·m";
+      calculateMotor();
+    });
+
+    $("calcPowerUnit").addEventListener("change", (event) => {
+      const previousUnit = event.target.dataset.previousUnit || "w";
+      const nextUnit = event.target.value;
+      const currentValue = Number($("calcPower").value);
+
+      if (Number.isFinite(currentValue)) {
+        const watts = powerToWatts(currentValue, previousUnit);
+        $("calcPower").value = inputNumber(powerFromWatts(watts, nextUnit));
+      }
+
+      event.target.dataset.previousUnit = nextUnit;
+      const labels = { w: "W", kw: "kW", ps: "PS", hp: "hp" };
+      $("calcPowerUnitLabel").textContent = labels[nextUnit];
+      calculateMotor();
+    });
+
+    $("availableTorqueUnit").dataset.previousUnit =
+      $("availableTorqueUnit").value;
+
+    $("availableTorqueUnit").addEventListener("change", event => {
+      const previousUnit =
+        event.target.dataset.previousUnit || "nm";
+      const nextUnit =
+        event.target.value;
+      const currentValue =
+        Number($("availableMotorTorque").value);
+
+      if (Number.isFinite(currentValue)) {
+        const torqueNm =
+          previousUnit === "kgfm"
+            ? currentValue * KGFM_TO_NM
+            : currentValue;
+
+        $("availableMotorTorque").value =
+          inputNumber(
+            nextUnit === "kgfm"
+              ? torqueNm / KGFM_TO_NM
+              : torqueNm
+          );
+      }
+
+      event.target.dataset.previousUnit = nextUnit;
+      $("availableTorqueUnitLabel").textContent =
+        nextUnit === "kgfm" ? "kgf·m" : "N·m";
+      calculateVehicle();
+    });
+
+    document.querySelectorAll(".apply").forEach(button => {
+      button.addEventListener("click", () => {
+        $("crr").value = button.dataset.crr;
+        $("mu").value = button.dataset.mu;
+        calculateVehicle();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    });
+
+    [
+      "wheelDiameter", "mass", "wheelbase", "trackWidth", "crr", "mu",
+      "gearRatio", "efficiency", "safetyFactor", "gravity",
+      "availableMotorTorque"
+    ].forEach(id => $(id).addEventListener("input", calculateVehicle));
+
+    ["calcTorque", "calcPower", "calcRpm"].forEach(id => {
+      $(id).addEventListener("input", calculateMotor);
+      $(id).addEventListener("keydown", event => {
+        if (event.key === "Enter") calculateMotor();
+      });
+    });
+
+    setVehicleMode("estimate");
+    setMotorMode("power");
+  </script>
+</body>
+</html>
